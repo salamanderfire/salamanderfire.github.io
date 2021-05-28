@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+  <!-- 元数据 -->
+  <meta charset="utf-8">
+  <link rel="icon" href="/images/logo.ico">
+  <title>RocketMQ单Master模式搭建 | SLMD | BLOG</title>
+  <meta name="author" content="SLMD" />
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="robots" content="index,follow" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="format-detection" content="telphone=no, email=no" />
+  
+    <meta name="keywords" content="RocketMQ, 单Master" />
+  
+  <meta name="description" content="单master模式一般用于本地测试，不建议线上环境使用，一旦broker宕机或者重启，会导致整个服务不可用  1. 环境准备 Linux centos7 JDK 1.8 RocketMQ 4.8.0 安装包：下载地址  2. 安装并启动1. 解压 将RocketMQ压缩包解压并移动到&#x2F;usr&#x2F;local目录下  1234# 解压 unzip命令无法识别时需要先执行 yum install -y">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RocketMQ单Master模式搭建">
+<meta property="og:url" content="https://salamanderfire.github.io/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:site_name" content="SLMD | BLOG">
+<meta property="og:description" content="单master模式一般用于本地测试，不建议线上环境使用，一旦broker宕机或者重启，会导致整个服务不可用  1. 环境准备 Linux centos7 JDK 1.8 RocketMQ 4.8.0 安装包：下载地址  2. 安装并启动1. 解压 将RocketMQ压缩包解压并移动到&#x2F;usr&#x2F;local目录下  1234# 解压 unzip命令无法识别时需要先执行 yum install -y">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://salamanderfire.github.io/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/cover.webp">
+<meta property="article:published_time" content="2021-05-27T02:55:12.000Z">
+<meta property="article:modified_time" content="2021-05-28T00:41:51.520Z">
+<meta property="article:author" content="SLMD">
+<meta property="article:tag" content="RocketMQ">
+<meta property="article:tag" content="单Master">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://salamanderfire.github.io/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/cover.webp">
+<meta name="twitter:site" content="@https://twitter.com/huchenfei1234">
+  
+  <!-- 站点验证相关 -->
+  
+    
+    
+    
+  
+  <!-- 样式表文件 -->
+  <link rel="stylesheet" id="kratos-css" href="/css/kratosr.min.css" type="text/css" media="all">
+  
+    <link rel="stylesheet" id="highlight-css" href="/css/highlight/light.min.css" type="text/css" media="all">
+  
+  
+  <link rel="stylesheet" id="fontawe-css" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" type="text/css" media="all">
+  <link rel="stylesheet" id="nprogress-css" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" type="text/css" media="all">
+  
+  
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css">
+  
+  
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  
+  
+    <link rel="stylesheet" id="darkmode-css" href="/css/kr-dark.min.css" type="text/css" media="all">
+  
+  <!-- 不得不预先加载的一些JS文件 -->
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+    <body class="custom-background">
+        <div id="kratos-wrapper">
+    <div id="kratos-page">
+        <div id="kratos-header">
+            <header id="kratos-desktop-topnav" class="kratos-topnav">
+                <div class="container">
+                    <div class="nav-header">
+                        <nav id="kratos-menu-wrap">
+                            <ul id="kratos-primary-menu" class="sf-menu">
+                                
+                                    
+                                        <li><a href="/"><i class="fa fa-home"></i>首页</a></li>
+                                    
+                                
+                                    
+                                        <li><a href="/archives/"><i class="fa fa-file"></i>档案馆</a></li>
+                                    
+                                
+                                    
+                                        <li><a href="/friends/"><i class="fa fa-paw"></i>好伙伴</a></li>
+                                    
+                                
+                                    
+                                        <li>
+                                            <a><i class="fa fa-link"></i>其他</a>
+                                            <ul class="sub-menu">
+                                                
+                                                    
+                                                
+                                                    
+                                                        <li><a href="https://salamanderfire.github.io/">作者博客</a></li>
+                                                    
+                                                
+                                                    
+                                                        <li><a target="_blank" rel="noopener" href="https://github.com/salamanderfire/salamanderfire.github.io">项目链接</a></li>
+                                                    
+                                                
+                                            </ul>
+                                        </li>
+                                    
+                                
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </header>
+            <header id="kratos-mobile-topnav" class="kratos-topnav">
+                <div class="container">
+                    <div class="color-logo"><a href="/">SLMD | BLOG</a></div>
+                    <div class="nav-toggle">
+                        <a class="kratos-nav-toggle js-kratos-nav-toggle">
+                            <i></i>
+                        </a>
+                    </div>
+                </div>
+            </header>
+        </div>
+        <div class="kratos-start kratos-hero-2">
+            <!-- <div class="kratos-overlay"></div> -->
+            <div class="kratos-cover kratos-cover-2 text-center">
+                <div class="desc desc2 animate-box">
+                    <a href="/">
+                        <h2>SLMD | BLOG</h2> <br />
+                        <span></span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div id="kratos-blog-post">
+            <div class="container">
+                <div id="main" class="row">
+                    
+
+        <section class="col-md-8">
+    <article>
+        <div class="kratos-hentry kratos-post-inner clearfix">
+            <header class="kratos-entry-header">
+                
+                    <h1 class="kratos-entry-title text-center">RocketMQ单Master模式搭建</h1>
+                
+                
+                <ul class="kratos-post-meta text-center">
+                    <li><i class="fa fa-calendar"></i> 2021-05-27</li>
+                    <li><i class="fa fa-user"></i> 作者 SLMD</li>
+                    <li>
+                        <i class="fa fa-edit"></i> 
+                        
+                        
+                            ~6.76K
+                        
+                        字
+                    </li>
+                    
+                </ul>
+            </header>
+            <div class="kratos-post-content">
+                <div id="expire-alert" class="alert alert-warning hidden" role="alert">
+                    本文最后编辑于 <time datetime="1622162511520"></time> 前，其中的内容可能需要更新。
+                </div>
+                
+                    <div class="kratos-post-inner-toc">
+                        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="toc-number">1.</span> <span class="toc-text">1. 环境准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%AE%89%E8%A3%85%E5%B9%B6%E5%90%AF%E5%8A%A8"><span class="toc-number">2.</span> <span class="toc-text">2. 安装并启动</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%A7%A3%E5%8E%8B"><span class="toc-number">2.1.</span> <span class="toc-text">1. 解压</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%90%AF%E5%8A%A8-NameServer"><span class="toc-number">2.2.</span> <span class="toc-text">2. 启动 NameServer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%90%AF%E5%8A%A8-Broker"><span class="toc-number">2.3.</span> <span class="toc-text">3. 启动 Broker</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%B5%8B%E8%AF%95"><span class="toc-number">2.4.</span> <span class="toc-text">4. 测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%85%B3%E9%97%AD-RocketMQ"><span class="toc-number">2.5.</span> <span class="toc-text">5. 关闭 RocketMQ</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-Java%E4%BB%A3%E7%A0%81%E6%B5%8B%E8%AF%95"><span class="toc-number">3.</span> <span class="toc-text">3. Java代码测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE"><span class="toc-number">3.1.</span> <span class="toc-text">1. 修改配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%BF%AE%E6%94%B9%E9%98%B2%E7%81%AB%E5%A2%99"><span class="toc-number">3.2.</span> <span class="toc-text">2. 修改防火墙</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E9%87%8D%E6%96%B0%E5%90%AF%E5%8A%A8RocketMQ"><span class="toc-number">3.3.</span> <span class="toc-text">3. 重新启动RocketMQ</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%B7%BB%E5%8A%A0pom%E4%BE%9D%E8%B5%96"><span class="toc-number">3.4.</span> <span class="toc-text">4. 添加pom依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Consumer-%E7%B1%BB"><span class="toc-number">3.5.</span> <span class="toc-text">5. Consumer 类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-Producer-%E7%B1%BB"><span class="toc-number">3.6.</span> <span class="toc-text">6. Producer 类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E6%B5%8B%E8%AF%95"><span class="toc-number">3.7.</span> <span class="toc-text">7. 测试</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB"><span class="toc-number">4.</span> <span class="toc-text">4. 命令汇总</span></a></li></ol>
+                    </div>
+                
+                <hr />
+                <blockquote>
+<p>单master模式一般用于本地测试，不建议线上环境使用，一旦broker宕机或者重启，会导致整个服务不可用</p>
+</blockquote>
+<h2 id="1-环境准备"><a href="#1-环境准备" class="headerlink" title="1. 环境准备"></a>1. 环境准备</h2><ul>
+<li>Linux centos7</li>
+<li>JDK 1.8</li>
+<li>RocketMQ 4.8.0 安装包：<a target="_blank" rel="noopener" href="https://www.apache.org/dyn/closer.cgi?path=rocketmq/4.8.0/rocketmq-all-4.8.0-bin-release.zip">下载地址</a></li>
+</ul>
+<h2 id="2-安装并启动"><a href="#2-安装并启动" class="headerlink" title="2. 安装并启动"></a>2. 安装并启动</h2><h3 id="1-解压"><a href="#1-解压" class="headerlink" title="1. 解压"></a>1. 解压</h3><blockquote>
+<p>将RocketMQ压缩包解压并移动到<code>/usr/local</code>目录下</p>
+</blockquote>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 解压 unzip命令无法识别时需要先执行 yum install -y unzip 进行安装</span></span><br><span class="line">unzip rocketmq-all-4.8.0-bin-release.zip</span><br><span class="line"><span class="comment"># 移动并重命名</span></span><br><span class="line">mv rocketmq-all-4.8.0-bin-release /usr/<span class="built_in">local</span>/rocketmq</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><em>以下命令都视作在RocketMQ的根目录下执行</em></p>
+</blockquote>
+<h3 id="2-启动-NameServer"><a href="#2-启动-NameServer" class="headerlink" title="2. 启动 NameServer"></a>2. 启动 NameServer</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启动 NameServer 命令</span></span><br><span class="line">nohup sh bin/mqnamesrv &amp;</span><br><span class="line"><span class="comment"># 启动成功后会自动在根目录生成日志，查看日志命令</span></span><br><span class="line">tail -f ~/logs/rocketmqlogs/namesrv.log</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>nohup</code>=&gt;不挂断地运行命令；<code>&amp;</code>=&gt;在后台运行；一般两个一起用，<code>nohup command &amp;</code></p>
+</blockquote>
+<h3 id="3-启动-Broker"><a href="#3-启动-Broker" class="headerlink" title="3. 启动 Broker"></a>3. 启动 Broker</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 启动 Broker</span></span><br><span class="line">nohup sh bin/mqbroker -n localhost:9876 &amp;</span><br><span class="line"><span class="comment"># 查看日志</span></span><br><span class="line">tail -f ~/logs/rocketmqlogs/broker.log</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>初次启动问题：RocketMQ默认配置的启动内存较大，启动时很有可能会因为内存不足而启动失败，所以启动Broker之前需要修改以下文件：</p>
+</blockquote>
+<p>修改<code>bin/runbroker.sh</code>文件</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 打开 runbroker.sh 文件，没有vim编辑器可以先下载，或者使用 vi 命令打开文件</span></span><br><span class="line">vim bin/runbroker.sh</span><br><span class="line"><span class="comment"># 找到jvm内存配置，修改为以下配置</span></span><br><span class="line">JAVA_OPT=<span class="string">&quot;<span class="variable">$&#123;JAVA_OPT&#125;</span> -server -Xms256m -Xmx256m -Xmn128m&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>修改<code>bin/runserver.sh</code>文件</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 打开 runserver.sh 文件</span></span><br><span class="line">vim bin/runserver.sh</span><br><span class="line"><span class="comment"># 修改为以下配置</span></span><br><span class="line">JAVA_OPT=<span class="string">&quot;<span class="variable">$&#123;JAVA_OPT&#125;</span> -server -Xms256m -Xmx256m -Xmn128m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m&quot;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>启动完成后可使用 <code>jps</code> 出命令查看是否启动成功</p>
+<p><img src="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/mq-03.png"></p>
+<p><code>jps</code> 命令是由jdk提供的，可以显示当前所有java进程</p>
+</blockquote>
+<h3 id="4-测试"><a href="#4-测试" class="headerlink" title="4. 测试"></a>4. 测试</h3><blockquote>
+<p>使用官方demo测试 RocketMQ</p>
+</blockquote>
+<p>发送消息：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置环境变量</span></span><br><span class="line"><span class="built_in">export</span> NAMESRV_ADDR=localhost:9876</span><br><span class="line"><span class="comment"># 使用安装包的Demo发送消息</span></span><br><span class="line">sh bin/tools.sh org.apache.rocketmq.example.quickstart.Producer</span><br></pre></td></tr></table></figure>
+
+<p>接收消息：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 设置环境变量</span></span><br><span class="line"><span class="built_in">export</span> NAMESRV_ADDR=localhost:9876</span><br><span class="line"><span class="comment"># 接收消息</span></span><br><span class="line">sh bin/tools.sh org.apache.rocketmq.example.quickstart.Consumer</span><br></pre></td></tr></table></figure>
+
+<p>执行成功的话会打印出一堆密密麻麻的消息</p>
+<h3 id="5-关闭-RocketMQ"><a href="#5-关闭-RocketMQ" class="headerlink" title="5. 关闭 RocketMQ"></a>5. 关闭 RocketMQ</h3><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 关闭 NameServer</span></span><br><span class="line">sh bin/mqshutdown namesrv</span><br><span class="line"><span class="comment"># 关闭 Broker</span></span><br><span class="line">sh bin/mqshutdown broker</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="3-Java代码测试"><a href="#3-Java代码测试" class="headerlink" title="3. Java代码测试"></a>3. Java代码测试</h2><h3 id="1-修改配置"><a href="#1-修改配置" class="headerlink" title="1. 修改配置"></a>1. 修改配置</h3><blockquote>
+<p>现在我们需要对RocketMQ的配置文件进行修改</p>
+</blockquote>
+<p>修改文件：<code>conf/broker.conf</code></p>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将 autoCreateTopicEnable 属性值修改为 true，开启自动创建Topic</span></span><br><span class="line"><span class="attr">autoCreateTopicEnable</span> = <span class="string">true</span></span><br><span class="line"><span class="comment"># 增加IP的配置</span></span><br><span class="line"><span class="attr">brokerIP1</span> = <span class="string">192.168.56.112</span></span><br><span class="line"><span class="comment"></span></span><br><span class="line"><span class="comment"># 消息储存路径配置，不添加的话默认消息存储目录就是 ~/store/...</span></span><br><span class="line"><span class="attr">storePathRootDir</span> = <span class="string">/usr/local/rocketmq/store</span></span><br><span class="line"><span class="attr">storePathCommitLog</span> = <span class="string">/usr/local/rocketmq/store/commitlog</span></span><br><span class="line"><span class="attr">storePathConsumeQueue</span> = <span class="string">/usr/local/rocketmq/store/consumequeue</span></span><br><span class="line"><span class="attr">storePathIndex</span> = <span class="string">/usr/local/rocketmq/store/index</span></span><br><span class="line"><span class="attr">storeCheckpoint</span> = <span class="string">/usr/local/rocketmq/store/checkpoint</span></span><br><span class="line"><span class="attr">abortFile</span> = <span class="string">/usr/local/rocketmq/store/abort</span></span><br></pre></td></tr></table></figure>
+
+<p>创建消息存储路径（配置了之后文件夹应该会自动创建，如果没有自动创建文件夹的话可以手动创建一下）：</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mkdir /usr/<span class="built_in">local</span>/rocketmq/store</span><br><span class="line">mkdir /usr/<span class="built_in">local</span>/rocketmq/store/commitlog</span><br><span class="line">mkdir /usr/<span class="built_in">local</span>/rocketmq/store/consumequeue</span><br><span class="line">mkdir /usr/<span class="built_in">local</span>/rocketmq/store/index</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-修改防火墙"><a href="#2-修改防火墙" class="headerlink" title="2. 修改防火墙"></a>2. 修改防火墙</h3><p>简单粗暴，直接关闭防火墙</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 关闭</span></span><br><span class="line">systemctl stop firewalld.service</span><br><span class="line"><span class="comment"># 查看防火墙状态</span></span><br><span class="line">firewall-cmd --state</span><br><span class="line"><span class="comment"># 禁止开机自启</span></span><br><span class="line">systemctl <span class="built_in">disable</span> firewalld.service</span><br></pre></td></tr></table></figure>
+
+<p>或者只开放需要的端口（更安全）</p>
+<blockquote>
+<p>需要开放三个端口：9876（NameServer注册端口） 10909（生产者发送消息的端口）10911（消费者接收消息的端口）</p>
+</blockquote>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --zone=public --add-port=9876/tcp --permanent</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><em>参数说明：</em></p>
+<p><code>--zone=public</code> <em>作用域</em></p>
+<p><code>--add-port=9876/tcp</code>  <em>开放的端口和访问类型，需要关闭端口的话就用：</em><code>--remove-port=9876/tcp</code></p>
+<p><code>--permanent</code> <em>永久生效，指重启防火墙之后配仍然生效。使用此参数需要重新加载防火墙</em></p>
+</blockquote>
+<p>重置防火墙</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --reload</span><br></pre></td></tr></table></figure>
+
+<p>查看开放的端口列表</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">firewall-cmd --zone=public --list-ports</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-重新启动RocketMQ"><a href="#3-重新启动RocketMQ" class="headerlink" title="3. 重新启动RocketMQ"></a>3. 重新启动RocketMQ</h3><p>此处启动 NameServer 时和上面一样，但是启动 Broker 时需要使用刚刚修改的配置文件</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh bin/mqbroker -n localhost:9876 -c conf/broker.conf  &amp;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>-n localhost:9876</code> =&gt; 由于 Broker 需要注册在 NameServer 上，这里指向的是 NameServer 的地址，默认端口为<code>9876</code></p>
+<p><code>-c conf/broker.conf</code> =&gt; 这里指向的是上面修改的配置文件路径（相对路径和绝对路径都可以），不带上这个的话rocketMQ启动时不会使用刚刚修改的配置文件</p>
+</blockquote>
+<h3 id="4-添加pom依赖"><a href="#4-添加pom依赖" class="headerlink" title="4. 添加pom依赖"></a>4. 添加pom依赖</h3><blockquote>
+<p>终于到了代码环节，依赖似乎并没有什么版本的限制，用最新的4.8.0应该也可以</p>
+</blockquote>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.apache.rocketmq<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>rocketmq-client<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>4.4.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="5-Consumer-类"><a href="#5-Consumer-类" class="headerlink" title="5. Consumer 类"></a>5. Consumer 类</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.client.exception.MQClientException;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.common.message.MessageExt;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.List;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 消费者，消费消息</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> hcf</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Consumer</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> MQClientException </span>&#123;</span><br><span class="line">        <span class="comment">// 实例化消费者</span></span><br><span class="line">        DefaultMQPushConsumer consumer = <span class="keyword">new</span> DefaultMQPushConsumer(<span class="string">&quot;rocketmq_test_group&quot;</span>);</span><br><span class="line">        <span class="comment">// 设置NameServer的地址，改成自己的ip</span></span><br><span class="line">        consumer.setNamesrvAddr(<span class="string">&quot;192.168.56.112:9876&quot;</span>);</span><br><span class="line">        <span class="comment">// 订阅一个或者多个Topic，以及Tag来过滤需要消费的消息</span></span><br><span class="line">        consumer.subscribe(<span class="string">&quot;TopicTest&quot;</span>, <span class="string">&quot;*&quot;</span>);</span><br><span class="line">        <span class="comment">// 注册回调实现类来处理从broker拉取回来的消息</span></span><br><span class="line">        consumer.registerMessageListener(<span class="keyword">new</span> MessageListenerConcurrently() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> ConsumeConcurrentlyStatus <span class="title">consumeMessage</span><span class="params">(List&lt;MessageExt&gt; msgs, ConsumeConcurrentlyContext context)</span> </span>&#123;</span><br><span class="line">                System.out.printf(<span class="string">&quot;%s consumer接收新消息: %s %n&quot;</span>, Thread.currentThread().getName(), msgs);</span><br><span class="line">                <span class="comment">// 标记该消息已经被成功消费</span></span><br><span class="line">                <span class="keyword">return</span> ConsumeConcurrentlyStatus.CONSUME_SUCCESS;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        <span class="comment">// 启动消费者实例</span></span><br><span class="line">        consumer.start();</span><br><span class="line">        System.out.printf(<span class="string">&quot;Consumer Started.%n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-Producer-类"><a href="#6-Producer-类" class="headerlink" title="6. Producer 类"></a>6. Producer 类</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> org.apache.rocketmq.client.producer.DefaultMQProducer;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.client.producer.SendResult;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.common.message.Message;</span><br><span class="line"><span class="keyword">import</span> org.apache.rocketmq.remoting.common.RemotingHelper;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 生产者，发送同步消息</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> hcf</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SyncProducer</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        <span class="comment">// 实例化消息生产者Producer</span></span><br><span class="line">        DefaultMQProducer producer = <span class="keyword">new</span> DefaultMQProducer(<span class="string">&quot;rocketmq_test_group&quot;</span>);</span><br><span class="line">        <span class="comment">// 设置NameServer的地址,改成自己的ip</span></span><br><span class="line">        producer.setNamesrvAddr(<span class="string">&quot;192.168.56.112:9876&quot;</span>);</span><br><span class="line">        <span class="comment">// 启动Producer实例</span></span><br><span class="line">        producer.start();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++) &#123;</span><br><span class="line">            <span class="comment">// 创建消息，并指定Topic，Tag和消息体</span></span><br><span class="line">            Message msg = <span class="keyword">new</span> Message(<span class="string">&quot;TopicTest&quot;</span> <span class="comment">/* Topic */</span>,</span><br><span class="line">                    <span class="string">&quot;TagA&quot;</span> <span class="comment">/* Tag */</span>,</span><br><span class="line">                    (<span class="string">&quot;Hello RocketMQ &quot;</span> + i).getBytes(RemotingHelper.DEFAULT_CHARSET) <span class="comment">/* Message body */</span></span><br><span class="line">            );</span><br><span class="line">            <span class="comment">// 发送消息到一个Broker</span></span><br><span class="line">            SendResult sendResult = producer.send(msg);</span><br><span class="line">            <span class="comment">// 通过sendResult返回消息是否成功送达</span></span><br><span class="line">            System.out.printf(<span class="string">&quot;%s%n&quot;</span>, sendResult);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 如果不再发送消息，关闭Producer实例。</span></span><br><span class="line">        producer.shutdown();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-测试"><a href="#7-测试" class="headerlink" title="7. 测试"></a>7. 测试</h3><blockquote>
+<p>消费者和生产者的代码是官方的示例代码，此处只是进行一个简单的测试，生产端发送一个Topic为<code>TopicTest</code>的同步消息，消费端消费<code>TopicTest</code>主题的消息</p>
+</blockquote>
+<p>启动main方法进行测试</p>
+<p><img src="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/mq-01.png" alt="Producer生产者打印"></p>
+<p><img src="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/mq-02.png" alt="Consumer消费者打印"></p>
+<p>到此就全部完成了！想要了解其他 RocketMQ 的常见用法可以参考<a target="_blank" rel="noopener" href="https://github.com/apache/rocketmq/blob/master/docs/cn/RocketMQ_Example.md">官方示例</a></p>
+<h2 id="4-命令汇总"><a href="#4-命令汇总" class="headerlink" title="4. 命令汇总"></a>4. 命令汇总</h2><p>启动 NameServer</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh bin/mqnamesrv &amp;</span><br></pre></td></tr></table></figure>
+
+<p>查看 NameServer 日志</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tail -f ~/logs/rocketmqlogs/namesrv.log</span><br></pre></td></tr></table></figure>
+
+<p>启动Broker</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh bin/mqbroker -n localhost:9876 -c conf/broker.conf  &amp;</span><br></pre></td></tr></table></figure>
+
+<p>查看 Broker 日志</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tail -f ~/logs/rocketmqlogs/broker.log</span><br></pre></td></tr></table></figure>
+
+<p>关闭 NameServer 和 Broker</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sh bin/mqshutdown namesrv</span><br><span class="line">sh bin/mqshutdown broker</span><br></pre></td></tr></table></figure>
+
+<p>查看 RocketMQ 服务运行状态</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">jps</span><br></pre></td></tr></table></figure>
+
+            </div>
+            
+            <footer class="kratos-entry-footer clearfix">
+                
+                <div class="footer-tag clearfix">
+                    <div class="pull-left">
+                    <i class="fa fa-tags"></i>
+                        <a class="tag-none-link" href="/tags/RocketMQ/" rel="tag">RocketMQ</a>, <a class="tag-none-link" href="/tags/%E5%8D%95Master/" rel="tag">单Master</a>
+                    </div>
+                    <div class="pull-date">
+                    <span>最后编辑：2021-05-28</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        
+            <nav class="navigation post-navigation clearfix" role="navigation">
+                
+                
+                <div class="nav-next clearfix">
+                    <a title=" RocketMQ集群搭建" href="/2021/05/27/RocketMQ集群搭建/">下一篇 &gt;</a>
+                </div>
+                
+            </nav>
+        
+        
+    </article>
+</section>
+
+                
+            
+
+<section id="kratos-widget-area" class="col-md-4 hidden-xs hidden-sm">
+    <!-- 文章和页面根据splitter来分割，没有的话就从头开始设置为sticky -->
+    
+    
+                <aside id="krw-about" class="widget widget-kratos-about clearfix">
+    <div class="photo-background"></div>
+    <div class="photo-wrapper clearfix">
+        <div class="photo-wrapper-tip text-center">
+            <img class="about-photo" src="/images/avatar.webp" />
+        </div>
+    </div>
+    <div class="textwidget">
+        <p class="text-center">不太会......</p>
+    </div>
+</aside>
+            
+                    <div class="sticky-area">
+                
+                    <aside id="krw-toc" class="widget widget-kratos-toc clearfix">
+    <div class="photo-background"></div>
+    <h4 class="widget-title no-after">
+        <i class="fa fa-compass"></i>
+        文章目录
+        <span class="toc-progress-bar"></span>
+    </h4>
+    <div class="textwidget">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87"><span class="toc-text">1. 环境准备</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%AE%89%E8%A3%85%E5%B9%B6%E5%90%AF%E5%8A%A8"><span class="toc-text">2. 安装并启动</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%A7%A3%E5%8E%8B"><span class="toc-text">1. 解压</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%90%AF%E5%8A%A8-NameServer"><span class="toc-text">2. 启动 NameServer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%90%AF%E5%8A%A8-Broker"><span class="toc-text">3. 启动 Broker</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%B5%8B%E8%AF%95"><span class="toc-text">4. 测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%85%B3%E9%97%AD-RocketMQ"><span class="toc-text">5. 关闭 RocketMQ</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-Java%E4%BB%A3%E7%A0%81%E6%B5%8B%E8%AF%95"><span class="toc-text">3. Java代码测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE"><span class="toc-text">1. 修改配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%BF%AE%E6%94%B9%E9%98%B2%E7%81%AB%E5%A2%99"><span class="toc-text">2. 修改防火墙</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E9%87%8D%E6%96%B0%E5%90%AF%E5%8A%A8RocketMQ"><span class="toc-text">3. 重新启动RocketMQ</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%B7%BB%E5%8A%A0pom%E4%BE%9D%E8%B5%96"><span class="toc-text">4. 添加pom依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Consumer-%E7%B1%BB"><span class="toc-text">5. Consumer 类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-Producer-%E7%B1%BB"><span class="toc-text">6. Producer 类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E6%B5%8B%E8%AF%95"><span class="toc-text">7. 测试</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E5%91%BD%E4%BB%A4%E6%B1%87%E6%80%BB"><span class="toc-text">4. 命令汇总</span></a></li></ol>
+    </div>
+</aside>
+                
+                
+  <aside id="krw-categories" class="widget widget-kratos-categories clearfix">
+    <h4 class="widget-title"><i class="fa fa-folder"></i>分类目录</h4>
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/RocketMQ/">RocketMQ</a><span class="category-list-count">2</span></li></ul>
+  </aside>
+
+
+            
+                
+  <aside id="krw-tags" class="widget widget-kratos-tags clearfix">
+    <h4 class="widget-title"><i class="fa fa-tags"></i>标签聚合</h4>
+      <div class="tag-clouds">
+        <a href="/tags/RocketMQ/" style="font-size: 0.8em;">RocketMQ</a> <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%9B%86%E7%BE%A4/" style="font-size: 0.6em;">分布式集群</a> <a href="/tags/%E5%8D%95Master/" style="font-size: 0.6em;">单Master</a>
+      </div>
+  </aside>
+
+            
+                
+  <aside id="krw-posts" class="widget widget-kratos-posts">
+  <h4 class="widget-title"><i class="fa fa-file"></i>最新文章</h4>
+  <div class="tab-content">
+      <ul class="list-group">
+        
+        
+          
+          
+            <a class="list-group-item" href="/2021/05/27/RocketMQ%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA/"><i class="fa  fa-book"></i> RocketMQ集群搭建</a>
+            
+          
+        
+          
+          
+            <a class="list-group-item" href="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/"><i class="fa  fa-book"></i> RocketMQ单Master模式搭建</a>
+            
+          
+        
+      </ul>
+  </div>
+  </aside>
+
+            
+    </div>
+</section>
+        
+        </div>
+    </div>
+</div>
+<footer>
+    <div id="footer"  class="ap-lrc"  >
+        <div class="kr-tool text-center">
+            <div class="tool">
+                
+                    <div class="box search-box">
+                        <a href="/search/">
+                            <span class="fa fa-search"></span>
+                        </a>
+                    </div>
+                
+                
+                    <div class="box theme-box" id="darkmode-switch">
+                        <span class="fa fa-adjust"></span>
+                    </div>
+                
+                
+            </div>
+            <div class="box gotop-box">
+                <span class="fa fa-chevron-up"></span>
+            </div>
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 col-md-offset-3 footer-list text-center">
+                    <ul class="kratos-social-icons">
+                        
+                        <li><a href="mailto:huchenfei1234@gmail.com"><i class="fa fa-envelope"></i></a></li>
+                        
+                        <li><a target="_blank" rel="nofollow" href="https://twitter.com/https://twitter.com/huchenfei1234"><i class="fa fa-twitter"></i></a></li>
+                        
+                        
+                        
+                        <li><a target="_blank" rel="nofollow" href="https://github.com/salamanderfire"><i class="fa fa-github"></i></a></li>
+                        
+                    </ul>
+                    <ul class="kratos-copyright">
+                        <div>
+                            <li>&copy; 2021 SLMD | BLOG 版权所有.</li>
+                            <li>本站已运行<span id="span_dt">Loading...</span></li>
+                        </div>
+                        <div>
+                            <li>Theme <a href="https://github.com/Candinya/Kratos-Rebirth" target="_blank">Kratos:Rebirth</a></li>
+                            <li>Site built with&nbsp;<i class="fa fa-heart throb" style="color:#d43f57"></i>&nbsp;by SLMD.</li>
+                        </div>
+                        <div>
+                            <li>Powered by <a href="https://hexo.io" target="_blank" rel="nofollow">Hexo</a></li>
+                            <li>Hosted on <a href="https://github.com/salamanderfire/salamanderfire.github.io" target="_blank">Github</a></li>
+                        </div>
+                        <div>
+                            
+                            
+                        </div>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+</div>
+</div>
+
+        <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.4/dist/js/bootstrap.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+<script>const notMobile = (!(navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)));</script>
+
+    <div>
+        <canvas id="snow"></canvas>
+        <script async type="text/javascript" src="/js/snow.min.js"></script>
+    </div>
+
+<script async src="/js/candy.min.js"></script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script>
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+    <meting-js
+        server="netease"
+        type="playlist"
+        id="34128788"
+        order="list"
+        fixed="true"
+    >
+    </meting-js>
+
+
+
+    <script defer src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+<script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+<script defer src="/js/kratosr.min.js"></script>
+<script defer src="/js/pjax.min.js"></script>
+
+
+    <script defer src="/js/kr-dark.min.js"></script>
+
+
+
+<!-- Extra support for third-party plguins  -->
+
+
+    </body>
+</html>
