@@ -18,18 +18,18 @@
   <meta name="description" content="单master模式一般用于本地测试，不建议线上环境使用，一旦broker宕机或者重启，会导致整个服务不可用  1. 环境准备 Linux centos7 JDK 1.8 RocketMQ 4.8.0 安装包：下载地址  2. 安装并启动1. 解压 将RocketMQ压缩包解压并移动到&#x2F;usr&#x2F;local目录下  1234# 解压 unzip命令无法识别时需要先执行 yum install -y">
 <meta property="og:type" content="article">
 <meta property="og:title" content="RocketMQ单Master模式搭建">
-<meta property="og:url" content="https://salamanderfire.github.io/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/index.html">
+<meta property="og:url" content="https://salamanderfire.github.io/2021/05/27/1398490750005678080/index.html">
 <meta property="og:site_name" content="SLMD | BLOG">
 <meta property="og:description" content="单master模式一般用于本地测试，不建议线上环境使用，一旦broker宕机或者重启，会导致整个服务不可用  1. 环境准备 Linux centos7 JDK 1.8 RocketMQ 4.8.0 安装包：下载地址  2. 安装并启动1. 解压 将RocketMQ压缩包解压并移动到&#x2F;usr&#x2F;local目录下  1234# 解压 unzip命令无法识别时需要先执行 yum install -y">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://salamanderfire.github.io/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/cover.webp">
+<meta property="og:image" content="https://salamanderfire.github.io/2021/05/27/1398490750005678080/cover.webp">
 <meta property="article:published_time" content="2021-05-27T02:55:12.000Z">
 <meta property="article:modified_time" content="2021-05-28T00:41:51.520Z">
 <meta property="article:author" content="SLMD">
 <meta property="article:tag" content="RocketMQ">
 <meta property="article:tag" content="单Master">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://salamanderfire.github.io/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/cover.webp">
+<meta name="twitter:image" content="https://salamanderfire.github.io/2021/05/27/1398490750005678080/cover.webp">
 <meta name="twitter:site" content="@https://twitter.com/huchenfei1234">
   
   <!-- 站点验证相关 -->
@@ -202,7 +202,7 @@
 
 <blockquote>
 <p>启动完成后可使用 <code>jps</code> 出命令查看是否启动成功</p>
-<p><img src="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/mq-03.png"></p>
+<p><img src="/2021/05/27/1398490750005678080/mq-03.png"></p>
 <p><code>jps</code> 命令是由jdk提供的，可以显示当前所有java进程</p>
 </blockquote>
 <h3 id="4-测试"><a href="#4-测试" class="headerlink" title="4. 测试"></a>4. 测试</h3><blockquote>
@@ -269,8 +269,8 @@
 <p>消费者和生产者的代码是官方的示例代码，此处只是进行一个简单的测试，生产端发送一个Topic为<code>TopicTest</code>的同步消息，消费端消费<code>TopicTest</code>主题的消息</p>
 </blockquote>
 <p>启动main方法进行测试</p>
-<p><img src="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/mq-01.png" alt="Producer生产者打印"></p>
-<p><img src="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/mq-02.png" alt="Consumer消费者打印"></p>
+<p><img src="/2021/05/27/1398490750005678080/mq-01.png" alt="Producer生产者打印"></p>
+<p><img src="/2021/05/27/1398490750005678080/mq-02.png" alt="Consumer消费者打印"></p>
 <p>到此就全部完成了！想要了解其他 RocketMQ 的常见用法可以参考<a target="_blank" rel="noopener" href="https://github.com/apache/rocketmq/blob/master/docs/cn/RocketMQ_Example.md">官方示例</a></p>
 <h2 id="4-命令汇总"><a href="#4-命令汇总" class="headerlink" title="4. 命令汇总"></a>4. 命令汇总</h2><p>启动 NameServer</p>
 <figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nohup sh bin/mqnamesrv &amp;</span><br></pre></td></tr></table></figure>
@@ -310,7 +310,7 @@
                 
                 
                 <div class="nav-next clearfix">
-                    <a title=" RocketMQ集群搭建" href="/2021/05/27/RocketMQ集群搭建/">下一篇 &gt;</a>
+                    <a title=" RocketMQ集群搭建" href="/2021/05/27/1398490663250694144/">下一篇 &gt;</a>
                 </div>
                 
             </nav>
@@ -378,13 +378,13 @@
         
           
           
-            <a class="list-group-item" href="/2021/05/27/RocketMQ%E9%9B%86%E7%BE%A4%E6%90%AD%E5%BB%BA/"><i class="fa  fa-book"></i> RocketMQ集群搭建</a>
+            <a class="list-group-item" href="/2021/05/27/1398490663250694144/"><i class="fa  fa-book"></i> RocketMQ集群搭建</a>
             
           
         
           
           
-            <a class="list-group-item" href="/2021/05/27/RocketMQ%E5%8D%95Master%E6%A8%A1%E5%BC%8F%E6%90%AD%E5%BB%BA/"><i class="fa  fa-book"></i> RocketMQ单Master模式搭建</a>
+            <a class="list-group-item" href="/2021/05/27/1398490750005678080/"><i class="fa  fa-book"></i> RocketMQ单Master模式搭建</a>
             
           
         
